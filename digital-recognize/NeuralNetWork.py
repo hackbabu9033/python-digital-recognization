@@ -7,7 +7,7 @@ class MatMulSizeError(Exception):
 
 class NN():
     @staticmethod
-    def costFunction(nn_params,train,data_size,layer1_size,layer2_size):
+    def costFunction(nn_params,train,data_size,layer1_size,layer2_size,label_count):
         #get x and y
         data = train.reshape(data_size,785)
         size = np.shape(data)
@@ -17,12 +17,12 @@ class NN():
         size = np.shape(x)
         m = size[0]
         y = y.astype(int)
-        y_label = np.zeros((layer2_size,size[0]))
+        y_label = np.zeros((label_count,size[0]))
         y_label_size = np.shape(y_label)
         for i in range(y_label_size[1]):
             y_label[y[i]][i] = 1
             pass
-        a = NN.forwardPropagation(x,nn_params,layer1_size,layer2_size)
+        a = NN.forwardPropagation(x,nn_params,layer1_size,layer2_size,label_count)
         h = a[len(a)-1]
 
         #use outputlayer to compute J
@@ -34,17 +34,20 @@ class NN():
         j = j*(-1/m);
         return j
 
-    def forwardPropagation(x,nn_params,layer1_size,layer2_size):
+    def forwardPropagation(x,nn_params,layer1_size,layer2_size,img_pixel_count,label_count):
         '''x is input layer 
         nn_params ->每一層的參數向量化的結果
 '''
         nn_params = np.asarray(nn_params)
         nn_params = nn_params.flatten()
         theta = []
-        theta1 = nn_params[0:(layer1_size*784)].reshape(layer1_size,784)
-        theta2 = nn_params[(layer1_size*784):].reshape(layer2_size,layer1_size)
+        pixel_count = img_pixel_count
+        theta1 = nn_params[0:(layer1_size*pixel_count)].reshape(layer1_size,pixel_count)
+        theta2 = nn_params[(layer1_size*pixel_count):(layer1_size*pixel_count)+layer2_size*layer1_size].reshape(layer2_size,layer1_size)
+        theta3 = nn_params[((layer1_size*pixel_count)+layer2_size*layer1_size):].reshape(label_count,layer2_size)
         theta.append(theta1)
         theta.append(theta2)
+        theta.append(theta3)
         a = np.transpose(x)
         hidden_size = len(theta)
         # 紀錄每一個隱藏層的output
@@ -58,19 +61,25 @@ class NN():
                 raise MatMulSizeError
             z = np.dot(param,a)
             a = MathOp.sigmoid(z)
+            ones = np.ones((1,size_a[1]))
+            a = np.concatenate((ones,a))
             outputs.append(a)
         return outputs
 
-    def backwardPropagation(nn_params,train,batch_size,layer1_size,layer2_size):        
+    def backwardPropagation(nn_params,train,batch_size,layer1_size,layer2_size,img_pixel_count,label_count):        
         #reshape nn_params to theta1 and theta2
         theta = []
-        theta1 = nn_params[0:(layer1_size*784)].reshape(layer1_size,784)
-        theta2 = nn_params[(layer1_size*784):].reshape(layer2_size,layer1_size)
+        pixel_count = img_pixel_count
+        theta1 = nn_params[0:(layer1_size*pixel_count)].reshape(layer1_size,pixel_count)
+        theta2 = nn_params[(layer1_size*pixel_count):(layer1_size*pixel_count)+layer2_size*layer1_size].reshape(layer2_size,layer1_size)        
+        theta3 = nn_params[((layer1_size*pixel_count)+layer2_size*layer1_size):].reshape(label_count,layer2_size)
+
         theta.append(theta1)
         theta.append(theta2)
+        theta.append(theta3)
 
         #get x and y
-        data = train.reshape(batch_size,785)
+        data = train.reshape(batch_size,(pixel_count+1))
         size = np.shape(data)
         x = data[:,1:size[1]]
         y = data[:,0]
@@ -78,41 +87,53 @@ class NN():
         size = np.shape(x)
         m = size[0]
         y = y.astype(int)
-        y_label = np.zeros((layer2_size,size[0]))
+        y_label = np.zeros((label_count,size[0]))
         y_label_size = np.shape(y_label)
         for i in range(y_label_size[1]):
             y_label[y[i]][i] = 1
             pass
-        a = NN.forwardPropagation(x,nn_params,layer1_size,layer2_size)
+        a = NN.forwardPropagation(x,nn_params,layer1_size,layer2_size,label_count)
         h = a[len(a)-1]       
 
         #update gradiant 
-        #計算第3層跟第2層的delta以及梯度(第一層是輸入層)
+        #計算第3層
+        theta3_size = np.shape(theta[2])
         theta2_size = np.shape(theta[1])
         theta1_size = np.shape(theta[0])
 
-        theta_2_grad = np.zeros(theta2_size)
-        delta_2 = np.zeros((theta2_size))
+        theta_3_grad = np.zeros(theta3_size)
+        delta_3 = np.zeros((theta3_size))
         error_3 = h-y_label
         for i in range(m):
-           error = np.reshape(error_3[:,i],(layer2_size,1))
+            error = np.reshape(error_3[:,i],(label_count,1))
+            active = np.reshape(a[1][:,i],(1,layer2_size))
+            delta_3 = delta_3 + (error @ active)
+            pass
+        theta_3_grad = delta_3/m
+
+        #計算第2層跟第1層的delta以及梯度(第一層是輸入層)        
+        theta_2_grad = np.zeros(theta2_size)
+        delta_2 = np.zeros((theta2_size))
+        error_2 = (theta[2].T@error_3)*a[1]*(1-a[1])
+        for i in range(m):
+           error = np.reshape(error_2[:,i],(layer2_size,1))
            active = np.reshape(a[0][:,i],(1,layer1_size))
            delta_2 = delta_2 + (error @ active)
            pass
         theta_2_grad = delta_2/m
 
-        #計算第二層
-        error_2 = (theta[1].T@error_3)*a[0]*(1-a[0])
+        #計算第1層
+        error_1 = (theta[1].T@error_2)*a[0]*(1-a[0])
         theta_1_grad = np.shape(theta1_size)
         delta_1 = np.zeros((theta1_size))
         for i in range(m):
-           error = np.reshape(error_2[:,i],(layer1_size,1))
-           active = np.reshape(x[i,:],(1,784))
+           error = np.reshape(error_1[:,i],(layer1_size,1))
+           active = np.reshape(x[i,:],(1,pixel_count))
            active = active.astype(float)
            delta_1 = delta_1 + (error @ active)
         theta_1_grad = delta_1/m       
 
-        costfun_grad = np.concatenate((theta_1_grad.flatten(),theta_2_grad.flatten()))
+        costfun_grad = np.concatenate((theta_1_grad.flatten(),theta_2_grad.flatten(),theta_3_grad.flatten()))
         return costfun_grad
 
     def gradient_check(nn_params, epsilson, train):
@@ -131,7 +152,7 @@ class NN():
         return number_gradient
 
     def gradient_descent(nn_params,learn_rate,iter_num,
-                         train_size,batch_size,layer1_size,layer2_size):
+                         train_size,batch_size,layer1_size,layer2_size,img_pixel_count,label_count):
         #open file
         with open('train_train_set.csv') as f:
             train_data = csv.reader(f)
@@ -148,15 +169,15 @@ class NN():
             batch_train_set = np.asarray(batch_train_set)
             batch_train_set = batch_train_set.flatten()
             batch_train_set = batch_train_set.astype(float)
-            gradients = NN.backwardPropagation(nn_params,batch_train_set,batch_size,layer1_size,layer2_size)
+            gradients = NN.backwardPropagation(nn_params,batch_train_set,batch_size,layer1_size,layer2_size,img_pixel_count,label_count)
             nn_params = nn_params - learn_rate * gradients
             #compute error for each 100 iterate and draw
             if(j % 100 == 0):
                 iterpoint.append(j)
-                error = NN.costFunction(nn_params,batch_train_set,batch_size,layer1_size,layer2_size)
+                error = NN.costFunction(nn_params,batch_train_set,batch_size,layer1_size,layer2_size,label_count)
                 error_values.append(error)
             pass    
-        error = NN.costFunction(nn_params,batch_train_set,batch_size,layer1_size,layer2_size)
+        error = NN.costFunction(nn_params,batch_train_set,batch_size,layer1_size,layer2_size,label_count)
         plt.plot(iterpoint,error_values)
         plt.show()
         return nn_params,error

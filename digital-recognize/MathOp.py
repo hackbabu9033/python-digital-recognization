@@ -9,7 +9,7 @@ class MathOp:
     @staticmethod
     def sigmoid(z):
         '''x is a vector,theta is matrix, return a vector
-ex: size(x)=[784,1],size(theta)=[layer1_size,784],then size(return)=[layer1_size,1]'''                 
+ex: size(x)=[pixel_count,1],size(theta)=[layer1_size,pixel_count],then size(return)=[layer1_size,1]'''                 
         return 1 / (1 + np.exp(-z)) 
         
 
