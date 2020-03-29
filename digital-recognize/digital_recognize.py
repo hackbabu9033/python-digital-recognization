@@ -22,7 +22,7 @@ x = x.astype(float)
 #determine num of parameters for each layer
 layer1_size = 90
 layer2_size = 30
-img_pixel_count = size[0] -1
+pixel_count = size[1] -1
 label_count = 10
 
 #divide data set into train set(70%) and test set(30%)
@@ -35,10 +35,6 @@ theta_1 = MathOp.RandParams(layer1_size,pixel_count,0.12)
 theta_2 = MathOp.RandParams(layer2_size,layer1_size,0.12)
 theta_3 = MathOp.RandParams(label_count,layer2_size,0.12)
 
-##add regularization term
-theta_1 = np.concatenate((theta_1,np.ones(layer1_size,1)))
-theta_2 = np.concatenate((theta_2,np.ones(layer2_size,1)))
-theta_3 = np.concatenate((theta_3,np.ones(label_count,1)))
 
 #unroll parameter
 nn_params =np.concatenate((theta_1.flatten(),theta_2.flatten(),theta_3.flatten()))
@@ -48,7 +44,7 @@ iter_num = 5000
 batch_size = 100
 train_params = []
 for rate in learn_rates:
-    train_params,error = NN.gradient_descent(nn_params,rate,iter_num,num_train,batch_size,layer1_size,layer2_size,label_count)
+    train_params,error = NN.gradient_descent(nn_params,rate,iter_num,num_train,batch_size,layer1_size,layer2_size,pixel_count,label_count)
     print('---error for first 420 data---')
     print(error)
     #get gradient from the minimize result 
@@ -87,7 +83,7 @@ for rate in learn_rates:
     test_data = test[:,1:size[1]]
     y = test[:,0]
     x = x.astype(float)
-    a = NN.forwardPropagation(x,train_params,layer1_size,layer2_size,label_count)
+    a = NN.forwardPropagation(x,train_params,layer1_size,layer2_size,pixel_count,label_count)
     prediction = a[len(a)-1]
     size = np.shape(prediction)
     prediction_label = np.zeros((10,num_test))

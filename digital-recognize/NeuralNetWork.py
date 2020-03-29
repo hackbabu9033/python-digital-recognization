@@ -7,7 +7,7 @@ class MatMulSizeError(Exception):
 
 class NN():
     @staticmethod
-    def costFunction(nn_params,train,data_size,layer1_size,layer2_size,label_count):
+    def costFunction(nn_params,train,data_size,layer1_size,layer2_size,img_pixel_count,label_count):
         #get x and y
         data = train.reshape(data_size,785)
         size = np.shape(data)
@@ -22,7 +22,7 @@ class NN():
         for i in range(y_label_size[1]):
             y_label[y[i]][i] = 1
             pass
-        a = NN.forwardPropagation(x,nn_params,layer1_size,layer2_size,label_count)
+        a = NN.forwardPropagation(x,nn_params,layer1_size,layer2_size,img_pixel_count,label_count)
         h = a[len(a)-1]
 
         #use outputlayer to compute J
@@ -60,9 +60,7 @@ class NN():
             if(param_size[1]!=size_a[0]):
                 raise MatMulSizeError
             z = np.dot(param,a)
-            a = MathOp.sigmoid(z)
-            ones = np.ones((1,size_a[1]))
-            a = np.concatenate((ones,a))
+            a = MathOp.sigmoid(z)           
             outputs.append(a)
         return outputs
 
@@ -92,7 +90,7 @@ class NN():
         for i in range(y_label_size[1]):
             y_label[y[i]][i] = 1
             pass
-        a = NN.forwardPropagation(x,nn_params,layer1_size,layer2_size,label_count)
+        a = NN.forwardPropagation(x,nn_params,layer1_size,layer2_size,img_pixel_count,label_count)
         h = a[len(a)-1]       
 
         #update gradiant 
@@ -174,10 +172,10 @@ class NN():
             #compute error for each 100 iterate and draw
             if(j % 100 == 0):
                 iterpoint.append(j)
-                error = NN.costFunction(nn_params,batch_train_set,batch_size,layer1_size,layer2_size,label_count)
+                error = NN.costFunction(nn_params,batch_train_set,batch_size,layer1_size,layer2_size,img_pixel_count,label_count)
                 error_values.append(error)
             pass    
-        error = NN.costFunction(nn_params,batch_train_set,batch_size,layer1_size,layer2_size,label_count)
+        error = NN.costFunction(nn_params,batch_train_set,batch_size,layer1_size,layer2_size,img_pixel_count,label_count)
         plt.plot(iterpoint,error_values)
         plt.show()
         return nn_params,error
