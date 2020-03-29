@@ -20,9 +20,9 @@ y = train[:,0]
 x = x.astype(float)
 
 #determine num of parameters for each layer
-# +1 for bias term
-layer1_size = 90 + 1
-layer2_size = 30 + 1
+#+1 for bias terms
+layer1_size = 1 + 1
+#layer2_size = 30
 pixel_count = size[1] 
 label_count = 10
 
@@ -33,27 +33,28 @@ num_train = 29400
 
 #random init parameter for each layer
 theta_1 = MathOp.RandParams(layer1_size,pixel_count,0.12)
-theta_2 = MathOp.RandParams(layer2_size,layer1_size,0.12)
-theta_3 = MathOp.RandParams(label_count,layer2_size,0.12)
+#theta_2 = MathOp.RandParams(layer2_size,layer1_size,0.12)
+#theta_3 = MathOp.RandParams(label_count,layer2_size,0.12)
+theta_2 = MathOp.RandParams(label_count,layer1_size,0.12)
 
 
 #unroll parameter
-nn_params = np.concatenate((theta_1.flatten(),theta_2.flatten(),theta_3.flatten()))
+nn_params =np.concatenate((theta_1.flatten(),theta_2.flatten()))
 
 learn_rates = [0.05]
-iter_num = 5000
+iter_num = 50
 batch_size = 100
 train_params = []
 for rate in learn_rates:
-    train_params,error = NN.gradient_descent(nn_params,rate,iter_num,num_train,batch_size,layer1_size,layer2_size,pixel_count,label_count)
+    train_params,error = NN.gradient_descent(nn_params,rate,iter_num,num_train,batch_size,layer1_size,pixel_count,label_count)
     print('---error for first 420 data---')
     print(error)
     pass
-#get gradient from the minimize result
+#get gradient from the minimize result 
 bias = np.ones((size[0],1))
 x = np.block([bias,x])
-a = NN.forwardPropagation(x,train_params,layer1_size,layer2_size,pixel_count,label_count)
-prediction = a[len(a) - 1]
+a = NN.forwardPropagation(x,train_params,layer1_size,pixel_count,label_count)
+prediction = a[len(a)-1]
 size = np.shape(prediction)
 prediction_label = np.zeros((10,420))
 y_label = np.zeros((10,420))
@@ -89,8 +90,8 @@ test_data = test[:,1:size[1]]
 x = np.block([bias,x])
 y = test[:,0]
 x = x.astype(float)
-a = NN.forwardPropagation(x,train_params,layer1_size,layer2_size,pixel_count,label_count)
-prediction = a[len(a) - 1]
+a = NN.forwardPropagation(x,train_params,layer1_size,pixel_count,label_count)
+prediction = a[len(a)-1]
 size = np.shape(prediction)
 prediction_label = np.zeros((10,num_test))
 error = np.zeros((10,num_test))
