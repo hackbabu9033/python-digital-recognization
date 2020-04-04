@@ -30,10 +30,13 @@ class NN():
         #use outputlayer to compute J
         j = 0
         for i in range(m):
-            sample_cost = np.sum((y_label[:,i].T) * (np.log(h[:,i])) + ((1 - y_label[:,i]).T) * np.log(1 - (h[:,i])))
+            #sample_cost = np.sum((y_label[:,i].T) * (np.log(h[:,i])) + ((1 - y_label[:,i]).T) * np.log(1 - (h[:,i])))
+            error_square = np.square((y_label[:,i].T)-h[:,i])
+            sample_cost = np.sum(error_square)/2
             j = j + sample_cost
             pass
-        j = j * (-1 / m)
+        j = j * (1 / m)
+        #j = j * (-1 / m)
         return j
 
     def forwardPropagation(x,nn_params,layer1_size,layer2_size,img_pixel_count,label_count):
