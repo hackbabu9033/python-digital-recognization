@@ -21,17 +21,11 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="gradient_descent_sample.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="MathOp.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="digital_recognize.py" />
     <Compile Include="NeuralNetWork.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="testFunction.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

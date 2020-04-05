@@ -1,6 +1,5 @@
 import csv
 import os
-import pickle
 import numpy as np
 import xlwt 
 from xlwt import Workbook 
@@ -21,7 +20,7 @@ x = x.astype(float)
 
 #determine num of parameters for each layer
 #+1 for bias terms
-layer1_size = 1 + 1
+layer1_size = 3 + 1
 #layer2_size = 30
 pixel_count = size[1] 
 label_count = 10
@@ -42,12 +41,12 @@ theta_2 = MathOp.RandParams(label_count,layer1_size,0.12)
 nn_params =np.concatenate((theta_1.flatten(),theta_2.flatten()))
 
 learn_rates = [0.05]
-iter_num = 50
+iter_num = 500
 batch_size = 100
 train_params = []
 for rate in learn_rates:
     train_params,error = NN.gradient_descent(nn_params,rate,iter_num,num_train,batch_size,layer1_size,pixel_count,label_count)
-    print('---error for first 420 data---')
+    print('---cost function error---')
     print(error)
     pass
 #get gradient from the minimize result 
@@ -73,6 +72,7 @@ for i in range(size[1]):
     prediction_label[:,i] = np.absolute(prediction_label[:,i] - y_label[:,i])
     error_flag += np.sum(prediction_label[:,i] / 2)
     pass
+print('---error rate for 420 data in train set---')
 print(error_flag / 420)
     
 

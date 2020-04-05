@@ -18,17 +18,11 @@ ex: size(x)=[pixel_count,1],size(theta)=[layer1_size,pixel_count],then size(retu
 
     @staticmethod
     def Relu(z):
-        if z > 0:
-            return z
-        else:
-            0
+        return z * (z > 0)
 
     @staticmethod
     def Relu_diff(z):
-        if z > 0:
-            return 1
-        else:
-            0
+        return 1 * (z > 0)
             
     @staticmethod
     def add(x,y):
